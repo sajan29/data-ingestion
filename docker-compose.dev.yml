@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: localstack_s3_test
+    image: localstack/localstack:latest
+    ports:
+      - "127.0.0.1:4566:4566" # Required for LocalStack S3
+      - "127.0.0.1:4510-4559:4510-4559"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - DEBUG=1
+    volumes:
+      - localstack_data:/var/lib/localstack
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data_ingestion_app
+    depends_on:
+      - localstack
+    environment:
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - S3_ENDPOINT=http://localstack:4566
+      - S3_BUCKET_NAME=data-ingestion-bucket
+    command: ["go", "run", "cmd/main.go"]
+    volumes:
+      - .:/app
+    working_dir: /app
+
+volumes:
+  localstack_data:

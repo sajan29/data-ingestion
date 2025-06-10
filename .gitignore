@@ -1,10 +1,4 @@
 # Binaries
-bin/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
 *.test
 
 # Build output
@@ -15,10 +9,3 @@ bin/
 .env
 *.log
 .vscode/
-.idea/
-
-# Dependency directories
-vendor/
-
-# Go modules
-go.sum
