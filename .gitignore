@@ -1,0 +1,24 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build output
+/build
+/dist
+
+# Local files
+.env
+*.log
+.vscode/
+.idea/
+
+# Dependency directories
+vendor/
+
+# Go modules
+go.sum
