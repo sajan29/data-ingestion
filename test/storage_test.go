@@ -1,36 +1,57 @@
 package test
 
 import (
+	"bytes"
+	"errors"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/sajan29/data-ingestion/internal/config"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/sajan29/data-ingestion/internal/models"
 	"github.com/sajan29/data-ingestion/internal/storage"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestUploadToS3(t *testing.T) {
-	os.Setenv("AWS_REGION", "us-east-1")
-	os.Setenv("AWS_S3_BUCKET", "my-test-bucket")
+// Mock S3 client
+type mockS3Client struct {
+	s3iface.S3API
+	PutObjectFunc func(input *s3.PutObjectInput) (*s3.PutObjectOutput, error)
+}
 
-	cfg := config.LoadEnv()
+func (m *mockS3Client) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+	return m.PutObjectFunc(input)
+}
 
-	mockData := []models.Post{
-		{
-			Post: models.Post{
-				UserID: 1,
-				ID:     12345,
-				Title:  "Hello",
-				Body:   "World",
-			},
-			IngestedAt: time.Now().Format(time.RFC3339),
-			Source:     "test",
+func TestUploadToS3_Success(t *testing.T) {
+	os.Setenv("S3_BUCKET_NAME", "test-bucket")
+
+	mockClient := &mockS3Client{
+		PutObjectFunc: func(input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(input.Body)
+			assert.Contains(t, buf.String(), `"id": 1`)
+			assert.Equal(t, "test-bucket", *input.Bucket)
+			return &s3.PutObjectOutput{}, nil
 		},
 	}
 
-	err := storage.UploadToS3(cfg, mockData)
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
+	sampleData := []models.Post{{ID: 1, Title: "test", Body: "sample body", UserID: 123}}
+	err := storage.UploadToS3(mockClient, sampleData)
+	assert.NoError(t, err)
+}
+
+func TestUploadToS3_Failure(t *testing.T) {
+	os.Setenv("S3_BUCKET_NAME", "test-bucket")
+
+	mockClient := &mockS3Client{
+		PutObjectFunc: func(input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+			return nil, errors.New("S3 failure")
+		},
 	}
+
+	sampleData := []models.Post{{ID: 2, Title: "fail", Body: "bad", UserID: 999}}
+	err := storage.UploadToS3(mockClient, sampleData)
+	assert.Error(t, err)
+	assert.Equal(t, "S3 failure", err.Error())
 }

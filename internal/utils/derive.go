@@ -11,8 +11,8 @@ func DeriveSourceName(endpoint string) (string, error) {
 		return "", err
 	}
 	parts := strings.Split(u.Hostname(), ".")
-	if len(parts) >= 2 {
-		return parts[len(parts)-2], nil
+	if len(parts) >= 1 {
+		return parts[0], nil
 	}
 	return "unknown_source", nil
 }

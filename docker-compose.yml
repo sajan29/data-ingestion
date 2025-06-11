@@ -12,7 +12,9 @@ services:
       - DEFAULT_REGION=us-east-1
       - DEBUG=1
     volumes:
+      - ./localstack-init.sh:/etc/localstack/init/ready.d/init.sh
       - localstack_data:/var/lib/localstack
+      
   app:
     build:
       context: .

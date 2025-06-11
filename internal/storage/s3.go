@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"time"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -10,10 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/sajan29/data-ingestion/internal/models"
 )
 
-func UploadToS3(data []models.Post) error {
+// CreateS3Client returns a real S3 client (implements s3iface.S3API)
+func CreateS3Client() s3iface.S3API {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_REGION")),
 		Endpoint: aws.String(os.Getenv("S3_ENDPOINT")),
@@ -24,12 +27,15 @@ func UploadToS3(data []models.Post) error {
 		),
 		S3ForcePathStyle: aws.Bool(true),
 	}))
+	return s3.New(sess)
+}
 
-	svc := s3.New(sess)
-
+// UploadToS3 uploads JSON data to an S3 bucket
+func UploadToS3(svc s3iface.S3API, data []models.Post) error {
 	jsonData, _ := json.MarshalIndent(data, "", "  ")
+	timestamp := time.Now().UTC().Format("20060102T150405")
 
-	key := fmt.Sprintf("ingestion-%d.json", data[0].ID)
+	key := fmt.Sprintf("ingestion-%s.json", timestamp)
 
 	_, err := svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(os.Getenv("S3_BUCKET_NAME")),

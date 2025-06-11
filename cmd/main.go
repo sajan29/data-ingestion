@@ -25,8 +25,8 @@ func main() {
 	}
 
 	transformed := transformer.Transform(posts, source)
-
-	err = storage.UploadToS3(transformed)
+    svc := storage.CreateS3Client()
+	err = storage.UploadToS3(svc, transformed)
 	if err != nil {
 		log.Fatalf("upload failed: %v", err)
 	}
