@@ -60,10 +60,10 @@ docker exec -it localstack_s3_test awslocal s3 ls s3://data-ingestion-bucket
 ```bash
 docker exec -it localstack_s3_test awslocal s3api get-object \
     --bucket data-ingestion-bucket \
-    --key ingestion-20250611T165905.json \
-    /tmp/ingestion-20250611T165905.json
+    --key ingestion-{timestamp}.json \
+    /tmp/ingestion-{timestamp}.json
 
-docker exec -it localstack_s3_test cat /tmp/ingestion-20250611T165905.json
+docker exec -it localstack_s3_test cat /tmp/ingestion-{timestamp}.json
 ```
 
 ---

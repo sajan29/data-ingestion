@@ -17,16 +17,22 @@ import (
 
 // CreateS3Client returns a real S3 client (implements s3iface.S3API)
 func CreateS3Client() s3iface.S3API {
-	sess := session.Must(session.NewSession(&aws.Config{
+
+	cfg := &aws.Config{
 		Region: aws.String(os.Getenv("AWS_REGION")),
-		Endpoint: aws.String(os.Getenv("S3_ENDPOINT")),
 		Credentials: credentials.NewStaticCredentials(
 			os.Getenv("AWS_ACCESS_KEY_ID"),
 			os.Getenv("AWS_SECRET_ACCESS_KEY"),
 			"",
 		),
-		S3ForcePathStyle: aws.Bool(true),
-	}))
+	}
+
+	if endpoint := os.Getenv("S3_ENDPOINT"); endpoint != "" {
+		cfg.Endpoint = aws.String(endpoint)
+		cfg.S3ForcePathStyle = aws.Bool(true) // required for LocalStack
+	}
+
+	sess := session.Must(session.NewSession(cfg))
 	return s3.New(sess)
 }
 
